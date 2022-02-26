@@ -7,8 +7,9 @@
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let pkgs = nixpkgs.legacyPackages.${system};
-      in {
+      in rec {
         packages.zeitung = pkgs.callPackage ./. {};
+        defaultPackage = packages.zeitung;
         devShell = self.outputs.packages.${system}.zeitung;
       });
 }
