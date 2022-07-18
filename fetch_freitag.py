@@ -62,6 +62,10 @@ class FreitagFetcher:
 
         return fname
 
+    def do_logout(self):
+        self.driver.get('https://www.freitag.de/logout')
+
+
 def main():
     target_dir = os.path.abspath(os.getcwd())
     auth = json.loads(Path(os.getenv("FREITAG_AUTH_FILE", "freitag-auth.json")).read_text())
@@ -80,6 +84,7 @@ def main():
     for ext in exts:
         print(fetcher.fetch_freitag(slug, ext=ext))
 
+    fetcher.do_logout()
     fetcher.driver.quit()
 
 if __name__ == '__main__':
