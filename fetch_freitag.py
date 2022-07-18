@@ -29,10 +29,17 @@ class FreitagFetcher:
         self.driver = webdriver.Firefox(options=options, service_log_path=os.devnull)
 
     def do_login(self):
-        self.driver.get("https://digital.freitag.de/login")
-        self.driver.find_element(By.ID, "id_username").send_keys(self.username)
-        self.driver.find_element(By.ID, "id_password").send_keys(self.password)
-        self.driver.find_element(By.XPATH, '//button[@type="submit"]').click()
+        self.driver.get("https://mein.freitag.de/login")
+        frame = self.driver.find_element(By.XPATH, '//iframe[contains(@src, "plenigo")]')
+        self.driver.switch_to.frame(frame)
+
+        self.driver.find_element(By.ID, "login_form__username").send_keys(self.username)
+        self.driver.find_element(By.ID, "login_form__password").send_keys(self.password)
+        submit = self.driver.find_element(By.XPATH, '//button[@type="submit"]')
+        submit.click()
+
+        self.driver.switch_to.default_content()
+        WebDriverWait(self.driver, 20).until(expected_conditions.url_contains("https://www.freitag.de"))
 
     def fetch_freitag(self, slug, ext=".epub"):
         cookies = self.driver.get_cookies()
@@ -41,7 +48,11 @@ class FreitagFetcher:
             s.cookies.set(cookie['name'], cookie['value'])
 
         fname = f'der-freitag-{slug}.{ext}'
-        r = s.get(f"https://digital.freitag.de/{quote(slug)}/der-freitag-{quote(slug)}.{ext}", allow_redirects=True)
+        r = s.get(
+            f"https://www.freitag.de/ausgaben/{quote(slug)}/digital-download",
+            params={'format': ext},
+            allow_redirects=True
+        )
         r.raise_for_status()
 
         path = os.path.join(self.target_dir, fname)
@@ -57,7 +68,10 @@ def main():
     fetcher = FreitagFetcher(target_dir=target_dir, username=auth['user'], password=auth['pass'])
 
     d = datetime.datetime.now().isocalendar()
-    slug = f"{d.week:02}{d.year % 1000:02}"
+    week = d.week
+    if d.weekday <= 3:
+        week -= 1
+    slug = f"{week:02}{d.year % 1000:02}"
     fetcher.do_login()
 
     exts = ["epub"]

@@ -3,7 +3,7 @@ mkdir -p work && cd work || exit 1
 
 fetch_freitag.py pdf epub
 rclone copy "$PWD" zeitung:
-rm ./*.pdf
+rm ./*.epub
 rmapi mput Zeitung
 rm ./*
 
