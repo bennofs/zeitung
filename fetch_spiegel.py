@@ -62,7 +62,7 @@ def main():
     week = d.week
     if d.weekday >= 5:
         week += 1
-    name = f"SP/{d.year}/{d.week + 1}"
+    name = f"SP/{d.year}/{week}"
     fetcher.do_login()
     print(fetcher.fetch_spiegel(name))
     fetcher.driver.quit()
