@@ -59,6 +59,9 @@ def main():
     fetcher = SpiegelFetcher(target_dir=target_dir, username=auth['user'], password=auth['pass'])
 
     d = datetime.datetime.now().isocalendar()
+    week = d.week
+    if d.weekday >= 5:
+        week += 1
     name = f"SP/{d.year}/{d.week + 1}"
     fetcher.do_login()
     print(fetcher.fetch_spiegel(name))
