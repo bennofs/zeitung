@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -exu
 mkdir -p work && cd work || exit 1
 
 fetch_spiegel.py
