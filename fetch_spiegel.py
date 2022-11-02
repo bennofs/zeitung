@@ -3,7 +3,7 @@ import os
 import datetime
 import json
 import os.path
-import shutil
+import sys
 from pathlib import Path
 from urllib.parse import quote
 
@@ -32,6 +32,7 @@ class SpiegelFetcher:
         self.driver.get("https://gruppenkonto.spiegel.de/anmelden.html")
         self.driver.find_element(By.ID, "loginname").click()
         self.driver.find_element(By.ID, "loginname").send_keys(self.username)
+        self.driver.find_element(By.ID, "submit").click()
         self.driver.find_element(By.ID, "password").send_keys(self.password)
         self.driver.find_element(By.ID, "submit").click()
 
@@ -62,7 +63,7 @@ def main():
     week = d.week
     if d.weekday >= 5:
         week += 1
-    name = f"SP/{d.year}/{week}"
+    name = f"SP/{d.year}/{week}" if len(sys.argv) < 2 else "SP/" + sys.argv[1]
     fetcher.do_login()
     print(fetcher.fetch_spiegel(name))
     fetcher.driver.quit()
