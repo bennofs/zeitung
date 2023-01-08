@@ -30,8 +30,8 @@ class SpiegelFetcher:
 
     def do_login(self):
         self.driver.get("https://gruppenkonto.spiegel.de/anmelden.html")
-        self.driver.find_element(By.ID, "loginname").click()
-        self.driver.find_element(By.ID, "loginname").send_keys(self.username)
+        self.driver.find_element(By.CSS_SELECTOR, "*[inputmode='email']").click()
+        self.driver.find_element(By.CSS_SELECTOR, "*[inputmode='email']").send_keys(self.username)
         self.driver.find_element(By.ID, "submit").click()
         self.driver.find_element(By.ID, "password").send_keys(self.password)
         self.driver.find_element(By.ID, "submit").click()
