@@ -8,7 +8,10 @@
     flake-utils.lib.eachDefaultSystem (system:
       let pkgs = nixpkgs.legacyPackages.${system};
       in rec {
-        packages.zeitung = pkgs.callPackage ./. {};
+        packages = {
+          rmapi = pkgs.callPackage ./rmapi.nix {};
+          zeitung = pkgs.callPackage ./. { rmapi = packages.rmapi; };
+        };
         defaultPackage = packages.zeitung;
         devShell = self.outputs.packages.${system}.zeitung;
       });
