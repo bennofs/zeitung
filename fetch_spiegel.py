@@ -25,8 +25,8 @@ class SpiegelFetcher:
         self.password = password
 
         options = webdriver.FirefoxOptions()
-        options.headless = True
-        self.driver = webdriver.Firefox(options=options, service_log_path=os.devnull)
+        options.add_argument("--headless")
+        self.driver = webdriver.Firefox(options=options)
 
     def do_login(self):
         self.driver.get("https://gruppenkonto.spiegel.de/anmelden.html")
@@ -42,7 +42,10 @@ class SpiegelFetcher:
         for cookie in cookies:
             s.cookies.set(cookie['name'], cookie['value'])
 
-        fname = heft.replace('/', '_') + ".pdf"
+        _, year, number = heft.split('/')
+        start_of_year = datetime.date(int(year), 1, 1)
+        released_date = start_of_year  + datetime.timedelta(weeks=int(number)-2, days=5 + (-start_of_year.weekday()) % 7)
+        fname = f'{released_date.isoformat()} Der Spiegel {year[2:]}-{number}.pdf'
         r = s.get("https://gruppenkonto.spiegel.de/download/download.html?heft=" + quote(heft), allow_redirects=True)
         r.raise_for_status()
 
@@ -60,10 +63,15 @@ def main():
     fetcher = SpiegelFetcher(target_dir=target_dir, username=auth['user'], password=auth['pass'])
 
     d = datetime.datetime.now().isocalendar()
+    year = d.year
     week = d.week
     if d.weekday >= 5:
         week += 1
-    name = f"SP/{d.year}/{week}" if len(sys.argv) < 2 else "SP/" + sys.argv[1]
+    if week > 53:
+        week = 1
+        year += 1
+
+    name = f"SP/{year}/{week}" if len(sys.argv) < 2 else "SP/" + sys.argv[1]
     fetcher.do_login()
     print(fetcher.fetch_spiegel(name))
     fetcher.driver.quit()

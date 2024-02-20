@@ -25,8 +25,8 @@ class FreitagFetcher:
         self.password = password
 
         options = webdriver.FirefoxOptions()
-        options.headless = True
-        self.driver = webdriver.Firefox(options=options, service_log_path=os.devnull)
+        options.add_argument('--headless')
+        self.driver = webdriver.Firefox(options=options)
 
     def do_login(self):
         self.driver.get("https://mein.freitag.de/login")
@@ -47,7 +47,10 @@ class FreitagFetcher:
         for cookie in cookies:
             s.cookies.set(cookie['name'], cookie['value'])
 
-        fname = f'der-freitag-{slug}.{ext}'
+        year, number = slug[2:], slug[:2]
+        start_of_year = datetime.date(int(year) + 2000, 1, 1)
+        release_date = start_of_year + datetime.timedelta(days=(3 + (-start_of_year.weekday()) % 7), weeks=int(number)-1)
+        fname = f'{release_date} Der Freitag {year}-{number}.{ext}'
         r = s.get(
             f"https://www.freitag.de/ausgaben/{quote(slug)}/digital-download",
             params={'format': ext},
