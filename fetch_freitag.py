@@ -4,6 +4,7 @@ import datetime
 import json
 import os.path
 import sys
+import shutil
 from pathlib import Path
 from urllib.parse import quote
 
@@ -26,7 +27,8 @@ class FreitagFetcher:
 
         options = webdriver.FirefoxOptions()
         options.add_argument('--headless')
-        self.driver = webdriver.Firefox(options=options)
+        service = webdriver.FirefoxService(executable_path=shutil.which("geckodriver"))
+        self.driver = webdriver.Firefox(options=options, service=service)
 
     def do_login(self):
         self.driver.get("https://mein.freitag.de/login")
