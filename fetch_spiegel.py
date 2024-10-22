@@ -27,6 +27,7 @@ class SpiegelFetcher:
 
         options = webdriver.FirefoxOptions()
         options.add_argument("--headless")
+        options.binary_location = shutil.which("firefox-esr") or shutil.which("firefox")
         service = webdriver.FirefoxService(executable_path=shutil.which("geckodriver"))
         self.driver = webdriver.Firefox(options=options, service=service)
 

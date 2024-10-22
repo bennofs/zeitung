@@ -5,7 +5,7 @@ let
 in stdenv.mkDerivation {
   name = "zeitung-0.1";
   src = ./.;
-  buildInputs = [ pyenv makeWrapper geckodriver rmapi rclone ];
+  buildInputs = [ pyenv makeWrapper geckodriver rmapi rclone firefox-esr ];
   installPhase = ''
     mkdir -p $out/bin
 
