@@ -9,7 +9,9 @@
       let pkgs = nixpkgs.legacyPackages.${system};
       in rec {
         packages = {
-          zeitung = pkgs.callPackage ./. {};
+          zeitung = pkgs.callPackage ./. {
+            rmapi = pkgs.callPackage ./rmapi.nix {};
+          };
         };
         defaultPackage = packages.zeitung;
         devShell = self.outputs.packages.${system}.zeitung;
