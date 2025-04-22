@@ -10,3 +10,4 @@ htmlcov
 
 *-auth.json
 .envrc
+.aider*

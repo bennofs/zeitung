@@ -10,8 +10,24 @@
       in rec {
         packages = {
           zeitung = pkgs.callPackage ./. {};
+          # Python environment with necessary packages for the scripts
+          pythonEnv = pkgs.python3.withPackages (p: [
+            p.selenium
+            p.requests
+            # geckodriver is also needed directly below for PATH
+          ]);
         };
         defaultPackage = packages.zeitung;
-        devShell = self.outputs.packages.${system}.zeitung;
+        devShell = pkgs.mkShell {
+          # Include the Python env, browser, driver, and other tools
+          buildInputs = [
+            packages.pythonEnv
+            pkgs.geckodriver
+            pkgs.firefox-esr
+            pkgs.rmapi
+            pkgs.rclone
+            pkgs.makeWrapper # Useful for testing script wrapping
+          ];
+        };
       });
 }
