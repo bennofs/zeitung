@@ -46,18 +46,14 @@ class ZeitFetcher:
             pass_field = self.wait.until(EC.presence_of_element_located((By.ID, "password")))
             pass_field.send_keys(self.password)
 
-            submit_button = self.wait.until(EC.element_to_be_clickable((By.ID, "kc-login")))
+            # Increased timeout to allow the CAPTCHA to compute.
+            long_wait = WebDriverWait(self.driver, 300)
+
+            submit_button = long_wait.until(EC.element_to_be_clickable((By.ID, "kc-login")))
             submit_button.click()
             print("Login submitted. Waiting for confirmation...")
 
-            print("Waiting for login confirmation (URL change)... Requires manual CAPTCHA solving.")
-            # Increased timeout to allow for manual CAPTCHA interaction.
-            long_wait = WebDriverWait(self.driver, 120)
             long_wait.until(lambda d: 'zeit.de/konto' in d.current_url)
-        except NoSuchElementException|TimeoutException as e:
-            print(f"Login failed: Could not find login elements. Check selectors. {e}")
-            self.driver.save_screenshot('zeit_login_error.png')
-            raise
         except Exception as e:
             print(f"An unexpected error occurred during login: {e}")
             self.driver.save_screenshot('zeit_login_error.png')
@@ -178,10 +174,6 @@ def main():
 
             downloaded_file = fetcher.fetch_zeit_issue(year=args.year, issue_number=args.issue, ext=file_ext)
             print(f"Successfully downloaded: {downloaded_file}")
-    except Exception as e:
-        print(f"An error occurred: {e}", file=sys.stderr)
-        # Error details should be printed within methods
-        sys.exit(1) # Exit with error status
     finally:
         if fetcher:
             fetcher.quit()
