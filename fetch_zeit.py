@@ -47,7 +47,7 @@ class ZeitFetcher:
             pass_field.send_keys(self.password)
 
             # Increased timeout to allow the CAPTCHA to compute.
-            long_wait = WebDriverWait(self.driver, 300)
+            long_wait = WebDriverWait(self.driver, 1800)
 
             submit_button = long_wait.until(EC.element_to_be_clickable((By.ID, "kc-login")))
             submit_button.click()
