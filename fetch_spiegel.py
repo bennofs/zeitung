@@ -47,7 +47,7 @@ class SpiegelFetcher:
 
         _, year, number = heft.split('/')
         start_of_year = datetime.date(int(year), 1, 1)
-        released_date = start_of_year  + datetime.timedelta(weeks=int(number)-2, days=5 + (-start_of_year.weekday()) % 7)
+        released_date = start_of_year  + datetime.timedelta(weeks=int(number)-2, days=(4 + (-start_of_year.weekday()) % 7) % 7)
         fname = f'{released_date.isoformat()} Der Spiegel {year[2:]}-{number}.pdf'
         r = s.get("https://gruppenkonto.spiegel.de/download/download.html?heft=" + quote(heft), allow_redirects=True)
         r.raise_for_status()
