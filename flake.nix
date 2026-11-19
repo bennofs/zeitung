@@ -18,7 +18,7 @@
           ]);
         };
         defaultPackage = packages.zeitung;
-        devShell = pkgs.mkShell {
+        devShells.default = pkgs.mkShell {
           # Include the Python env, browser, driver, and other tools
           buildInputs = [
             packages.pythonEnv
@@ -29,5 +29,6 @@
             pkgs.makeWrapper # Useful for testing script wrapping
           ];
         };
+        devShell = devShells.default;
       });
 }

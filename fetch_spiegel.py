@@ -6,17 +6,13 @@ import os.path
 import sys
 import shutil
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import urlsplit
 
 import requests
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 
 class SpiegelFetcher:
@@ -32,31 +28,42 @@ class SpiegelFetcher:
         self.driver = webdriver.Firefox(options=options, service=service)
 
     def do_login(self):
+        wait = WebDriverWait(self.driver, 30)
         self.driver.get("https://gruppenkonto.spiegel.de/anmelden.html")
-        self.driver.find_element(By.CSS_SELECTOR, "*[inputmode='email']").click()
-        self.driver.find_element(By.CSS_SELECTOR, "*[inputmode='email']").send_keys(self.username)
-        self.driver.find_element(By.ID, "submit").click()
-        self.driver.find_element(By.ID, "password").send_keys(self.password)
-        self.driver.find_element(By.ID, "submit").click()
+        wait.until(expected_conditions.element_to_be_clickable((By.ID, "username"))).send_keys(self.username)
+        self.driver.find_element(By.ID, "kc-login").click()
+        wait.until(expected_conditions.element_to_be_clickable((By.ID, "password"))).send_keys(self.password)
+        self.driver.find_element(By.ID, "kc-login").click()
+        # The callback sets the session cookie; wait before handing it to requests.
+        wait.until(lambda driver: (
+            urlsplit(driver.current_url).hostname == "gruppenkonto.spiegel.de"
+            and urlsplit(driver.current_url).path.startswith("/meinkonto/")
+        ))
 
     def fetch_spiegel(self, heft):
         cookies = self.driver.get_cookies()
-        s = requests.Session()
-        for cookie in cookies:
-            s.cookies.set(cookie['name'], cookie['value'])
-
         _, year, number = heft.split('/')
         start_of_year = datetime.date(int(year), 1, 1)
         released_date = start_of_year  + datetime.timedelta(weeks=int(number)-2, days=(4 + (-start_of_year.weekday()) % 7) % 7)
         fname = f'{released_date.isoformat()} Der Spiegel {year[2:]}-{number}.pdf'
-        r = s.get("https://gruppenkonto.spiegel.de/download/download.html?heft=" + quote(heft), allow_redirects=True)
-        r.raise_for_status()
-
         path = os.path.join(self.target_dir, fname)
-
-        with open(path, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=1<<20):
-                f.write(chunk)
+        with requests.Session() as session:
+            for cookie in cookies:
+                session.cookies.set(cookie['name'], cookie['value'],
+                                    domain=cookie['domain'], path=cookie['path'])
+            with session.get(
+                "https://gruppenkonto.spiegel.de/download/download.html",
+                params={"heft": heft}, stream=True, timeout=60,
+            ) as response:
+                response.raise_for_status()
+                chunks = response.iter_content(chunk_size=1 << 20)
+                first_chunk = next(chunks, b"")
+                if not first_chunk.startswith(b"%PDF-"):
+                    raise RuntimeError("SPIEGEL did not return a PDF; check login and issue availability")
+                with open(path, 'wb') as f:
+                    f.write(first_chunk)
+                    for chunk in chunks:
+                        f.write(chunk)
 
         return fname
 
@@ -75,9 +82,11 @@ def main():
         year += 1
 
     name = f"SP/{year}/{week}" if len(sys.argv) < 2 else "SP/" + sys.argv[1]
-    fetcher.do_login()
-    print(fetcher.fetch_spiegel(name))
-    fetcher.driver.quit()
+    try:
+        fetcher.do_login()
+        print(fetcher.fetch_spiegel(name))
+    finally:
+        fetcher.driver.quit()
 
 if __name__ == '__main__':
     main()
